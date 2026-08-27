@@ -1,4 +1,4 @@
-# Manage your VCF 9.1 Homelab using powercli
+# Manage your VCF 9.1 Homelab using PowerCLI
 Automates your VMware VCF 9.1 Management domain from PowerCLI scripts.
 Powers on or shuts down a VCF 9.1 Management Domain homelab based on the official shutdown order:
 
