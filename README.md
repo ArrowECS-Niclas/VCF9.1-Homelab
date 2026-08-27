@@ -9,7 +9,7 @@ Also powers on/off hosts from the grid using [Homey Pro](https://homey.app/) sma
 
 Assumes any workload domain and any non-VCF related VMS in the Management domain are already shut down before running this script.
 
-## Inception of the script
+## Inception of the script(s)
 My homelab consists of 3 Minisforum MS-A2 hosts, Unifi XG16 switch and home automation is done using [Homey Pro](https://homey.app/) in my house.
 So the purpose of the script(s) is to combine powering on/off hosts and switches, and manage (start/stop) VCF services and VMs using powershell/powercli
 in a clean way - graceful shutdowns.
