@@ -7,7 +7,7 @@ https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/fleet-m
 Manages the VCF Managment Services cluster, all VCF related VMs, vSAN and vCenter server including power on/off the VCF host.
 Also powers on/off hosts from the grid using [Homey Pro](https://homey.app/) smart power plugs.
 
-Assumes any workload domain and any non-VCF related VMS in the Management domain are already shut down before running this script.
+Assumes any workload domain and any non-VCF related VMs in the Management domain are already shut down before running this script.
 
 ## Inception of the script(s)
 My homelab consists of 3 Minisforum MS-A2 hosts, Unifi XG16 switch and home automation is done using [Homey Pro](https://homey.app/) in my house.
