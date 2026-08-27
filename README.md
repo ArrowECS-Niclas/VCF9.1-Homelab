@@ -22,7 +22,7 @@ The script uses a configuration file (sample-variables.ps1) to choose what the s
 
 `$StartUpVCF             = $true or $false` # Startup all VCF services (assumes hosts and vCenter is available)
 
-To perform a power on and or start up VCF:
+To perform a power on and or start up of VCF:
 
 `./Full-VCF-9-1-Start-Up.ps1 -EnvConfigFile ./sample-variables.ps1`
 
