@@ -14,6 +14,9 @@ My homelab consists of 3 Minisforum MS-A2 hosts, Unifi XG16 switch and home auto
 So the purpose of the script(s) is to combine powering on/off hosts and switches, and manage (start/stop) VCF services and VMs using powershell/powercli
 in a clean way - graceful shutdowns.
 
+# Changelog
+27/08/2026
+* Initial release
 
 ## Full VCF 9.1 Start up script (Full-VCF-9-1-Start-up.ps1)
 The script uses a configuration file (sample-variables.ps1) to choose what the script should do:
