@@ -14,6 +14,11 @@ My homelab consists of 3 Minisforum MS-A2 hosts, Unifi XG16 switch and home auto
 So the purpose of the script(s) is to combine powering on/off hosts and switches, and manage (start/stop) VCF services and VMs using powershell/powercli
 in a clean way - graceful shutdowns.
 
+Homey Pro is not a required component, just omit/change the configuration in the sample-variables.ps1 file and set these variables to $false:
+$PowerOnSmartplugs and $PowerOffSmartplugs
+Then the script will make a full shutdown of the VCF environment.
+
+
 # Changelog
 31/08/2026
 * Combined the start up- and shut down-script into a single script (Full-VCF-9-1-Start-Shutdown.ps1) and added an -Action parameter to define whether to Startup or Shutdown the VCF environment instead.
