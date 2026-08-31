@@ -15,6 +15,9 @@ So the purpose of the script(s) is to combine powering on/off hosts and switches
 in a clean way - graceful shutdowns.
 
 # Changelog
+31/08/2026
+* Combined the start up- and shut down-script into a single script (Full-VCF-9-1-Start-Shutdown.ps1) and added an -Action parameter to define whether to Startup or Shutdown the VCF environment instead.
+  
 27/08/2026
 * Initial release
 
