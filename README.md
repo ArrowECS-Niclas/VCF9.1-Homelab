@@ -22,6 +22,17 @@ in a clean way - graceful shutdowns.
 * Initial release
 
 # The scripts
+## Full VCF 9.1 Start up or Shut down script (Full-VCF-9-1-Start-Shutdown.ps1)
+This script replaces the individual startup and shutdown scripts, and combines them into a single script instead.
+The scripts uses the same configuration file as previously, but by using a parameter when executing the script you can decide whether to Startup or Shutdown the VCF environment
+To perform a power on and or start up of VCF:
+
+`./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Startup`
+
+To perform a power off and or shut down of VCF:
+
+`./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Shutdown`
+
 ## Full VCF 9.1 Start up script (Full-VCF-9-1-Start-up.ps1)
 The script uses a configuration file (sample-variables.ps1) to choose what the script should do:
 
