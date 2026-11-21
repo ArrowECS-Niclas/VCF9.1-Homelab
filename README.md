@@ -16,12 +16,36 @@ The script was written for a three-host Minisforum MS-A2 homelab with a UniFi XG
 
 Create or edit `sample-variables.ps1` with the settings below. The script dot-sources this file, so use a configuration file you trust and keep it private if it contains passwords or an API token.
 
-Both parameters are required. `-EnvConfigFile` takes the path to the PowerShell configuration file. `-Action` accepts `Startup` or `Shutdown` and selects which pair of configuration switches applies.
+Use `-EnvConfigFile` to point to the PowerShell configuration file and `-Action` to select `Startup` or `Shutdown`. Both parameters are required. The optional `-CredentialsUri` selects a web-hosted VCF Installer deployment export as the password source.
+
+### Use passwords from the configuration file
+
+Set `$DefaultPassword` for vCenter. The shutdown script also uses it for the management services runtime unless you set a separate `$VMSP_PASSWORD` in the configuration file.
 
 ```powershell
 ./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Startup
 ./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Shutdown
 ```
+
+### Load passwords from a web server
+
+Serve the VCF Installer deployment export as `VCF-Credentials.json` and pass its HTTP or HTTPS URL along with `-EnvConfigFile`.
+
+```powershell
+./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Startup -CredentialsUri 'http://192.168.20.20/VCF-Credentials.json'
+./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Shutdown -CredentialsUri 'http://192.168.20.20/VCF-Credentials.json'
+```
+
+Set `$Username` to the vCenter SSO administrator account. The script matches these configured FQDNs case-insensitively and accepts a trailing DNS dot.
+
+| Action | Configuration setting | JSON hostname field | JSON password field |
+| --- | --- | --- | --- |
+| Startup and shutdown | `$vcentersrv` | `vcenterSpec.vcenterHostname` | `vcenterSpec.adminUserSsoPassword` |
+| Shutdown only | `$VCFManagementServicesFqdn` | `vspClusterSpec.platformFqdn` | `vspClusterSpec.systemUserPassword` |
+
+With `-CredentialsUri`, you can omit the password assignments from the PowerShell configuration file. The script fetches the export only when VCF startup or shutdown is enabled for the selected action. A download failure, hostname mismatch, or missing password stops the script before it changes device power or VCF state. The script manages the other VMs through vCenter using the same connection.
+
+The HTTP URL sends passwords in plaintext. Keep the file on a trusted lab network or serve it over HTTPS.
 
 ## Configuration variables
 
@@ -46,7 +70,7 @@ Use VM display names for appliance settings. PowerCLI name lookups accept wildca
 | `$clustername` | `VCF-Mgmt-Cluster` | vCenter inventory name of the management vSAN cluster. |
 | `$Username` | `administrator@vsphere.local` | Account used to connect to vCenter. |
 | `$DefaultPassword` | `<vCenter password>` | Password for the vCenter account. The script reads it as a string and converts it to a PowerShell credential. |
-| `$VMSP_PASSWORD` | `<break-glass password>` | Password for `vmware-system-user`, passed to the runtime shutdown companion script. |
+| `$VMSP_PASSWORD` | `<break-glass password>` | Optional local password for `vmware-system-user`. Without `-CredentialsUri`, the script uses `$DefaultPassword` when this setting is unset or empty. |
 | `$SDDCManager` | `sddcm01` | SDDC Manager VM. |
 | `$NSXManagerNodes` | `nsx01*` | NSX Manager VMs. |
 | `$NSXEdges` | `edge01*` | NSX Edge VMs targeted during startup. |
@@ -54,6 +78,7 @@ Use VM display names for appliance settings. PowerCLI name lookups accept wildca
 | `$VNANodes` | `vna01*` | VNA VMs. |
 | `$VCFOperations` | `vcf01` | VCF Operations VM. |
 | `$VCFManagementServices` | `vcf-msr01*` | Management services VMs to shut down and fallback targets for startup. |
+| `$VCFManagementServicesFqdn` | `vcf-msr01.vcf.lab` | Management services platform FQDN used for shutdown with `-CredentialsUri`. |
 | `$LicenseServer` | `vcf-lic01` | License Server VM. |
 | `$CloudProxy` | `vcf-proxy01` | Cloud Proxy VM. |
 | `$VCFOperationsforNetworks` | `vcf-vrni01` | VCF Operations for Networks VM. |
@@ -86,6 +111,7 @@ For VCF Management Services, the script treats powered-off VMs in the `vcf-manag
 
 ## Changelog
 
+- **21 November 2026** — Added `-CredentialsUri` to load passwords by hostname from a web-hosted VCF Installer deployment export.
 - **31 August 2026** — Combined the separate startup and shutdown scripts into `Full-VCF-9-1-Start-Shutdown.ps1` and added the `-Action` parameter.
 - **27 August 2026** — Initial release.
 

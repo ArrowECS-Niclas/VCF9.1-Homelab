@@ -12,14 +12,16 @@ $VCFOperationsforNetworks = "vcf-vrni01"
 $CloudProxy               = "vcf-proxy01"
 $LicenseServer            = "vcf-lic01"
 $VCFManagementServices    = "vcf-msr01*"
+$VCFManagementServicesFqdn = "vcf-msr01.vcf.lab" # Platform FQDN used for JSON password lookup
 $VCFOperations            = "vcf01"
 $NSXEdges                 = "edge01*" 
 $VNANodes                 = "vna01*"
 $NSXManagerNodes          = "nsx01a"
 $SDDCManager              = "sddcm01"
 $Username                 = "administrator@vsphere.local"
+# These passwords can be omitted when running the combined script with -CredentialsUri.
 $DefaultPassword          = "VMware1!VMware1!"
-$VMSP_PASSWORD            = "VMware1!VMware1!" # Breakglass password for vmware-system-user
+$VMSP_PASSWORD            = $DefaultPassword # Set separately if the break-glass password differs
 
 # Physical VMware ESX 9.1 hosts
 $VCFHosts = @(

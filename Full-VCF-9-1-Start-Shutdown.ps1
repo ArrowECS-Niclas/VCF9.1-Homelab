@@ -21,15 +21,23 @@
     Required. Must be either 'Startup' or 'Shutdown'.
     Controls which sequence is executed. The opposite sequence is never run.
 
+.PARAMETER CredentialsUri
+    Optional HTTP or HTTPS URL of a VCF Installer deployment export.
+    Matches vcentersrv to vcenterSpec.vcenterHostname and, for shutdown,
+    VCFManagementServicesFqdn to vspClusterSpec.platformFqdn.
+
 .EXAMPLE
     ./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Startup
 
 .EXAMPLE
     ./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Shutdown
 
+.EXAMPLE
+    ./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Shutdown -CredentialsUri 'http://192.168.20.20/VCF-Credentials.json'
+
 .NOTES
     Author  : Niclas Borgstrom
-    Version : 1.1
+    Version : 1.2
 
     Requirements:
     - PowerShell 7+
@@ -44,7 +52,9 @@ param (
 
     [Parameter(Mandatory = $true)]
     [ValidateSet('Startup', 'Shutdown')]
-    [string]$Action
+    [string]$Action,
+
+    [uri]$CredentialsUri
 )
 
 # ---------------------------------------------------------------------------
@@ -56,6 +66,60 @@ if (-not (Test-Path -Path $EnvConfigFile -PathType Leaf)) {
 }
 
 . $EnvConfigFile  # Dot-source the config file
+
+$needsVcfCredentials = ($Action -eq 'Startup' -and $StartUpVCF) -or
+                       ($Action -eq 'Shutdown' -and $ShutdownVCF)
+if ($CredentialsUri -and $needsVcfCredentials) {
+    if (-not $CredentialsUri.IsAbsoluteUri -or $CredentialsUri.Scheme -notin @('http', 'https')) {
+        throw 'CredentialsUri must be an absolute HTTP or HTTPS URL.'
+    }
+
+    try {
+        $response = Invoke-WebRequest -Uri $CredentialsUri -TimeoutSec 15 -ErrorAction Stop
+        $jsonOptions = @{ AsHashtable = $true; NoEnumerate = $true; ErrorAction = 'Stop' }
+        if ((Get-Command ConvertFrom-Json).Parameters.ContainsKey('DateKind')) {
+            $jsonOptions.DateKind = 'String'
+        }
+        $deployment = ConvertFrom-Json -InputObject $response.Content @jsonOptions
+    }
+    catch {
+        throw 'Could not download or parse the credentials JSON from CredentialsUri.'
+    }
+
+    if ($deployment -isnot [System.Collections.IDictionary]) {
+        throw 'The credentials JSON must contain an object.'
+    }
+
+    $vCenterSpec = $deployment.vcenterSpec
+    if ([string]::IsNullOrWhiteSpace($vcentersrv) -or
+        $vCenterSpec -isnot [System.Collections.IDictionary] -or
+        $vCenterSpec.vcenterHostname -isnot [string] -or
+        $vCenterSpec.vcenterHostname.TrimEnd('.') -ine $vcentersrv.TrimEnd('.')) {
+        throw "The credentials JSON has no vCenter matching '$vcentersrv' in vcenterSpec.vcenterHostname."
+    }
+    if ($vCenterSpec.adminUserSsoPassword -isnot [string] -or
+        [string]::IsNullOrWhiteSpace($vCenterSpec.adminUserSsoPassword)) {
+        throw "The credentials JSON is missing the SSO administrator password for '$vcentersrv'."
+    }
+    $DefaultPassword = $vCenterSpec.adminUserSsoPassword
+
+    if ($Action -eq 'Shutdown') {
+        if ([string]::IsNullOrWhiteSpace($VCFManagementServicesFqdn)) {
+            throw 'Set VCFManagementServicesFqdn in the configuration file to use CredentialsUri for shutdown.'
+        }
+        $vspClusterSpec = $deployment.vspClusterSpec
+        if ($vspClusterSpec -isnot [System.Collections.IDictionary] -or
+            $vspClusterSpec.platformFqdn -isnot [string] -or
+            $vspClusterSpec.platformFqdn.TrimEnd('.') -ine $VCFManagementServicesFqdn.TrimEnd('.')) {
+            throw "The credentials JSON has no management services cluster matching '$VCFManagementServicesFqdn' in vspClusterSpec.platformFqdn."
+        }
+        if ($vspClusterSpec.systemUserPassword -isnot [string] -or
+            [string]::IsNullOrWhiteSpace($vspClusterSpec.systemUserPassword)) {
+            throw "The credentials JSON is missing the system user password for '$VCFManagementServicesFqdn'."
+        }
+        $VMSP_PASSWORD = $vspClusterSpec.systemUserPassword
+    }
+}
 
 # ---------------------------------------------------------------------------
 # Shared helper functions
@@ -452,7 +516,8 @@ elseif ($Action -eq 'Shutdown') {
         Write-Host "Control Node IP: $ControlNodeIP" -ForegroundColor Green
 
         # Shutdown VCF Services Runtime
-        .\vcf_services_runtime_shutdown.ps1 -NodeIp $ControlNodeIP -Credential $Credential -Password $VMSP_PASSWORD
+        $runtimePassword = if ([string]::IsNullOrEmpty($VMSP_PASSWORD)) { $DefaultPassword } else { $VMSP_PASSWORD }
+        .\vcf_services_runtime_shutdown.ps1 -NodeIp $ControlNodeIP -Credential $Credential -Password $runtimePassword
 
         # Individual components (order matters)
         Stop-VMGuestIfExists -VMName $VCFAutomation
