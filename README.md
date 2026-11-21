@@ -43,6 +43,8 @@ Set `$Username` to the vCenter SSO administrator account. The script matches the
 | Startup and shutdown | `$vcentersrv` | `vcenterSpec.vcenterHostname` | `vcenterSpec.adminUserSsoPassword` |
 | Shutdown only | `$VCFManagementServicesFqdn` | `vspClusterSpec.platformFqdn` | `vspClusterSpec.systemUserPassword` |
 
+If your configuration omits `$VCFManagementServicesFqdn`, the script combines a single VM name or stem from `$VCFManagementServices` (such as `vcf-msr01*`) with the DNS suffix of `$vcentersrv`. For example, `vcf-msr01*` and `vc01.vcf.lab` produce `vcf-msr01.vcf.lab`. Set `$VCFManagementServicesFqdn` explicitly if the platform uses a different name or DNS suffix.
+
 With `-CredentialsUri`, you can omit the password assignments from the PowerShell configuration file. The script fetches the export only when VCF startup or shutdown is enabled for the selected action. A download failure, hostname mismatch, or missing password stops the script before it changes device power or VCF state. The script manages the other VMs through vCenter using the same connection.
 
 The HTTP URL sends passwords in plaintext. Keep the file on a trusted lab network or serve it over HTTPS.

@@ -24,7 +24,7 @@
 .PARAMETER CredentialsUri
     Optional HTTP or HTTPS URL of a VCF Installer deployment export.
     Matches vcentersrv to vcenterSpec.vcenterHostname and, for shutdown,
-    VCFManagementServicesFqdn to vspClusterSpec.platformFqdn.
+    the management services platform FQDN to vspClusterSpec.platformFqdn.
 
 .EXAMPLE
     ./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Startup
@@ -104,18 +104,27 @@ if ($CredentialsUri -and $needsVcfCredentials) {
     $DefaultPassword = $vCenterSpec.adminUserSsoPassword
 
     if ($Action -eq 'Shutdown') {
-        if ([string]::IsNullOrWhiteSpace($VCFManagementServicesFqdn)) {
-            throw 'Set VCFManagementServicesFqdn in the configuration file to use CredentialsUri for shutdown.'
+        $platformFqdn = $VCFManagementServicesFqdn
+        if ([string]::IsNullOrWhiteSpace($platformFqdn)) {
+            # Older configurations use a VM name or a stem such as vcf-msr01*.
+            $vCenterDomain = ($vcentersrv.TrimEnd('.') -split '\.', 2)[1]
+            if ($vCenterDomain -and $VCFManagementServices -is [string] -and
+                $VCFManagementServices -match '^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\*?$') {
+                $platformFqdn = "$($VCFManagementServices.TrimEnd('*')).$vCenterDomain"
+            }
+            else {
+                throw "Set VCFManagementServicesFqdn in '$EnvConfigFile' to the management services platform FQDN."
+            }
         }
         $vspClusterSpec = $deployment.vspClusterSpec
         if ($vspClusterSpec -isnot [System.Collections.IDictionary] -or
             $vspClusterSpec.platformFqdn -isnot [string] -or
-            $vspClusterSpec.platformFqdn.TrimEnd('.') -ine $VCFManagementServicesFqdn.TrimEnd('.')) {
-            throw "The credentials JSON has no management services cluster matching '$VCFManagementServicesFqdn' in vspClusterSpec.platformFqdn."
+            $vspClusterSpec.platformFqdn.TrimEnd('.') -ine $platformFqdn.TrimEnd('.')) {
+            throw "The credentials JSON has no management services cluster matching '$platformFqdn'. Set VCFManagementServicesFqdn in '$EnvConfigFile' to the correct platform FQDN."
         }
         if ($vspClusterSpec.systemUserPassword -isnot [string] -or
             [string]::IsNullOrWhiteSpace($vspClusterSpec.systemUserPassword)) {
-            throw "The credentials JSON is missing the system user password for '$VCFManagementServicesFqdn'."
+            throw "The credentials JSON is missing the system user password for '$platformFqdn'."
         }
         $VMSP_PASSWORD = $vspClusterSpec.systemUserPassword
     }
