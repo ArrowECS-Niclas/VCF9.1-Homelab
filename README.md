@@ -29,7 +29,9 @@ Set `$DefaultPassword` for vCenter. The shutdown script also uses it for the man
 
 ### Load passwords from a web server
 
-Serve the VCF Installer deployment export as `VCF-Credentials.json` and pass its HTTP or HTTPS URL along with `-EnvConfigFile`.
+To create `VCF-Credentials.json`, follow the exporter project's setup instructions and run `Invoke-VcfDeploymentExport.ps1`. It exports the latest VCF Installer deployment specification, including the passwords used below, and publishes the JSON file to your lab web server. [Export-VcfInstallerPasswords](https://github.com/ArrowECS-Niclas/Export-VcfInstallerPasswords)
+
+Once the file is available, pass its HTTP or HTTPS URL to `-CredentialsUri` along with `-EnvConfigFile`.
 
 ```powershell
 ./Full-VCF-9-1-Start-Shutdown.ps1 -EnvConfigFile ./sample-variables.ps1 -Action Startup -CredentialsUri 'http://192.168.20.20/VCF-Credentials.json'
